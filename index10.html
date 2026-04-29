@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>บันทึกรายรับ-รายจ่าย</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #111111;
+            --text-muted: #888888;
+            --border-color: #E0E0E0;
+        }
+
+        /* 🔴 ป้องกันการซูม iOS ขั้นเด็ดขาด 🔴 */
+        html, body {
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
+        }
+        input[type="text"], 
+        input[type="number"], 
+        input[type="password"], 
+        input[type="month"], 
+        select, 
+        textarea {
+            font-size: 16px !important;
+            transform: scale(1) !important;
+        }
+        /* ---------------------------------- */
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { width: 100%; max-width: 480px; }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        h2, h3 { margin-top: 0; text-align: center; font-weight: 600; }
+
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding: 0 5px;
+        }
+        .user-greeting { font-size: 14px; color: var(--text-muted); }
+        .user-greeting b { color: var(--text-main); }
+        .btn-logout-small {
+            background: transparent; color: var(--text-muted);
+            border: 1px solid var(--border-color); padding: 6px 14px;
+            border-radius: 20px; font-size: 12px; font-family: 'Prompt', sans-serif;
+            cursor: pointer; transition: all 0.2s; margin: 0; width: auto;
+        }
+        .btn-logout-small:hover { color: var(--text-main); border-color: var(--text-main); }
+
+        .balance-box {
+            text-align: center; padding: 10px 0 20px 0;
+            border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
+        }
+        .balance-title { color: var(--text-muted); font-size: 14px; }
+        .balance-amount { font-size: 36px; font-weight: 600; margin: 10px 0; }
+
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            font-family: 'Prompt', sans-serif; box-sizing: border-box;
+            background: var(--bg-color);
+        }
+        input:focus, select:focus { outline: none; border-color: var(--text-main); }
+
+        button {
+            width: 100%; padding: 14px; margin-bottom: 10px;
+            background-color: var(--text-main); color: var(--card-bg);
+            border: none; border-radius: 8px; font-family: 'Prompt', sans-serif;
+            font-weight: 600; cursor: pointer; transition: background 0.3s; font-size: 16px;
+        }
+        button:hover { background-color: #333333; }
+        
+        .btn-outline {
+            background-color: transparent; color: var(--text-main);
+            border: 1px solid var(--text-main);
+        }
+        .btn-outline:hover { background-color: var(--bg-color); }
+        
+        .link-text { text-align: center; font-size: 14px; color: var(--text-muted); cursor: pointer; text-decoration: underline; }
+
+        #app-section, #register-section { display: none; }
+
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+        }
+        .history-header h3 { margin: 0; font-size: 16px; }
+        
+        #month-selector {
+            width: auto; margin-bottom: 0; padding: 8px 12px;
+            border-radius: 20px; cursor: pointer; 
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th {
+            text-align: right; font-weight: 400; font-size: 14px;
+            color: var(--text-muted); padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th:first-child { text-align: left; }
+        td {
+            padding: 12px 10px; border-bottom: 1px solid var(--bg-color);
+            text-align: right; font-size: 14px;
+        }
+        td:first-child { text-align: left; color: var(--text-muted); }
+        tr:last-child td { border-bottom: none; }
+        
+        tbody tr { cursor: pointer; transition: background 0.2s; border-radius: 8px; }
+        tbody tr:hover { background-color: #f0f0f0; }
+
+        .empty-row { text-align: center !important; color: var(--text-muted); padding: 20px 0; cursor: default !important;}
+        .empty-row:hover { background-color: transparent !important; }
+
+        .modal {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px); align-items: center; justify-content: center;
+        }
+        .modal-content {
+            width: 90%; max-width: 400px; position: relative;
+            max-height: 80vh; overflow-y: auto; padding: 25px; margin: 0;
+        }
+        .close-btn {
+            position: absolute; right: 20px; top: 20px; font-size: 24px; 
+            cursor: pointer; color: var(--text-muted); line-height: 1;
+        }
+        .close-btn:hover { color: var(--text-main); }
+        
+        .modal-section-title {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; color: var(--text-muted); font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px; margin-bottom: 10px;
+        }
+        
+        .detail-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--bg-color);
+        }
+        .detail-item:last-child { border-bottom: none; }
+        .detail-info { display: flex; flex-direction: column; }
+        .detail-note { font-size: 15px; color: var(--text-main); }
+        .detail-time { font-size: 12px; color: var(--text-muted); margin-top: 4px;}
+
+        .action-link {
+            font-size: 11px; color: var(--text-muted); text-decoration: underline;
+            cursor: pointer; margin-left: 8px; transition: color 0.2s;
+        }
+        .action-link:hover { color: var(--text-main); }
+        .delete-link:hover { color: #dc3545; }
+
+        .income-text { color: #28a745; font-weight: 600; }
+        .expense-text { color: #dc3545; font-weight: 600; }
+        
+        /* เอาสีเขียว-แดงมาโชว์ในตารางหลักด้วยตามเดิม หรือจะใช้แค่ใน Popup ก็ได้ */
+        #history-tbody .income-text { color: var(--text-main); }
+        #history-tbody .expense-text { color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-section" class="card">
+        <h2>เข้าสู่ระบบ</h2>
+        <input type="text" id="login-username" placeholder="ชื่อผู้ใช้ (เช่น admin, john)">
+        <input type="password" id="login-password" placeholder="รหัสผ่าน">
+        <button id="btn-login">เข้าสู่ระบบ</button>
+        <div class="link-text" onclick="toggleAuth('register')">ยังไม่มีบัญชี? สมัครสมาชิก</div>
+    </div>
+
+    <div id="register-section" class="card">
+        <h2>สมัครสมาชิก</h2>
+        <input type="text" id="reg-username" placeholder="ตั้งชื่อผู้ใช้ (ภาษาอังกฤษ/ตัวเลข)">
+        <input type="password" id="reg-password" placeholder="รหัสผ่าน (ขั้นต่ำ 6 ตัว)">
+        <button id="btn-register" class="btn-outline">สมัครสมาชิก</button>
+        <div class="link-text" onclick="toggleAuth('login')">มีบัญชีแล้ว? เข้าสู่ระบบ</div>
+    </div>
+
+    <div id="app-section">
+        <div class="top-header">
+            <div class="user-greeting">ผู้ใช้: <b id="display-username"></b></div>
+            <button id="btn-logout" class="btn-logout-small">ออกจากระบบ</button>
+        </div>
+
+        <div class="card">
+            <div class="balance-box">
+                <div class="balance-title">ยอดเงินคงเหลือทั้งหมด</div>
+                <div class="balance-amount" id="total-balance">฿0.00</div>
+            </div>
+
+            <select id="type">
+                <option value="income">รายรับ</option>
+                <option value="expense">รายจ่าย</option>
+            </select>
+            
+            <input type="number" id="amount" placeholder="จำนวนเงิน">
+            <input type="text" id="note" placeholder="รายการ (เช่น ค่ากาแฟ, เงินเดือน)">
+            
+            <button id="btn-save">บันทึกข้อมูล</button>
+            <button id="btn-cancel-edit" class="btn-outline" style="display: none;" onclick="cancelEdit()">ยกเลิกการแก้ไข</button>
+        </div>
+
+        <div class="card">
+            <div class="history-header">
+                <h3>สรุปรายวัน</h3>
+                <input type="month" id="month-selector">
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: -5px; text-align: center;">*คลิกที่ตารางเพื่อดูรายละเอียดแต่ละวัน</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>วันที่</th>
+                        <th>รายรับ</th>
+                        <th>รายจ่าย</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="detail-modal" class="modal">
+    <div class="modal-content card">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3 id="modal-title" style="margin-bottom: 20px; text-align: left;">รายละเอียด</h3>
+        <div id="modal-detail-list">
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyANoN59OLVwFuF_4BYydVrCHgIenn2QyYw",
+      authDomain: "rayrubrayjai.firebaseapp.com",
+      projectId: "rayrubrayjai",
+      storageBucket: "rayrubrayjai.firebasestorage.app",
+      messagingSenderId: "465568449327",
+      appId: "1:465568449327:web:f49c34fb9ce88f3efd97da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const DUMMY_DOMAIN = "@rayrub.com"; 
+    window.dailyDataCache = {}; 
+    window.editDocId = null;
+
+    const monthSelector = document.getElementById('month-selector');
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    monthSelector.value = currentMonthStr;
+    monthSelector.addEventListener('change', loadTransactions);
+
+    window.toggleAuth = function(mode) {
+        if(mode === 'register') {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'block';
+        } else {
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+        }
+    }
+
+    document.getElementById('btn-register').addEventListener('click', () => {
+        let username = document.getElementById('reg-username').value.trim();
+        const password = document.getElementById('reg-password').value;
+        if(!username) { alert("กรุณาใส่ชื่อผู้ใช้"); return; }
+        if(password.length < 6) { alert("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"); return; }
+        const email = username + DUMMY_DOMAIN;
+        createUserWithEmailAndPassword(auth, email, password)
+            .then(() => alert('สมัครสมาชิกสำเร็จ!'))
+            .catch(error => {
+                if(error.code === 'auth/email-already-in-use') alert('ชื่อผู้ใช้นี้ถูกใช้งานไปแล้ว กรุณาเปลี่ยนชื่อใหม่');
+                else alert('เกิดข้อผิดพลาด: ' + error.message);
+            });
+    });
+
+    document.getElementById('btn-login').addEventListener('click', () => {
+        let username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        if(!username) { alert("กรุณาใส่ชื่อผู้ใช้"); return; }
+        const email = username + DUMMY_DOMAIN;
+        signInWithEmailAndPassword(auth, email, password)
+            .catch(error => alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!'));
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const username = user.email.split('@')[0];
+            document.getElementById('display-username').innerText = username;
+
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            loadTransactions(); 
+        } else {
+            document.getElementById('app-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+        }
+    });
+
+    document.getElementById('btn-save').addEventListener('click', async () => {
+        const type = document.getElementById('type').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+        const note = document.getElementById('note').value;
+
+        if(!amount || !note) { alert("กรุณากรอกข้อมูลให้ครบถ้วน"); return; }
+
+        const btnSave = document.getElementById('btn-save');
+        btnSave.disabled = true;
+        btnSave.innerText = "กำลังบันทึก...";
+
+        try {
+            if(window.editDocId) {
+                await updateDoc(doc(db, "transactions", window.editDocId), {
+                    type: type,
+                    amount: amount,
+                    note: note
+                });
+                window.cancelEdit(); 
+            } else {
+                await addDoc(collection(db, "transactions"), {
+                    uid: auth.currentUser.uid,
+                    type: type,
+                    amount: amount,
+                    note: note,
+                    timestamp: serverTimestamp()
+                });
+                document.getElementById('amount').value = '';
+                document.getElementById('note').value = '';
+            }
+        } catch (e) {
+            console.error("Error saving document: ", e);
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        } finally {
+            if(!window.editDocId) {
+                btnSave.disabled = false;
+                btnSave.innerText = "บันทึกข้อมูล";
+            }
+        }
+    });
+
+    function loadTransactions() {
+        if(!auth.currentUser) return;
+
+        const q = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            let totalBalanceAllTime = 0;
+            const selectedMonth = document.getElementById('month-selector').value; 
+            const dailySummary = {};
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if(data.uid === auth.currentUser.uid) { 
+                    
+                    if(data.type === 'income') totalBalanceAllTime += data.amount;
+                    else totalBalanceAllTime -= data.amount;
+
+                    if(data.timestamp) {
+                        const dateObj = data.timestamp.toDate();
+                        const docMonthStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        if(docMonthStr === selectedMonth) {
+                            const day = String(dateObj.getDate()).padStart(2, '0');
+                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const year = dateObj.getFullYear();
+                            const dateKey = `${day}/${month}`; 
+                            
+                            const timeStr = `${String(dateObj.getHours()).padStart(2, '0')}:${String(dateObj.getMinutes()).padStart(2, '0')} น.`;
+
+                            if(!dailySummary[dateKey]) {
+                                dailySummary[dateKey] = { income: 0, expense: 0, details: [], fullDate: `${day}/${month}/${year}` };
+                            }
+
+                            if(data.type === 'income') {
+                                dailySummary[dateKey].income += data.amount;
+                            } else {
+                                dailySummary[dateKey].expense += data.amount;
+                            }
+
+                            dailySummary[dateKey].details.push({
+                                id: docSnap.id, 
+                                type: data.type,
+                                amount: data.amount,
+                                note: data.note,
+                                time: timeStr
+                            });
+                        }
+                    }
+                }
+            });
+
+            window.dailyDataCache = dailySummary;
+            document.getElementById('total-balance').innerText = `฿${totalBalanceAllTime.toLocaleString()}`;
+            const tbody = document.getElementById('history-tbody');
+            tbody.innerHTML = '';
+
+            const sortedDates = Object.keys(dailySummary).sort((a, b) => {
+                const dayA = parseInt(a.split('/')[0]);
+                const dayB = parseInt(b.split('/')[0]);
+                return dayB - dayA; 
+            });
+
+            if(sortedDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-row">ไม่มีรายการในเดือนนี้</td></tr>`;
+            } else {
+                sortedDates.forEach(dateStr => {
+                    const inc = dailySummary[dateStr].income;
+                    const exp = dailySummary[dateStr].expense;
+                    
+                    const row = document.createElement('tr');
+                    row.setAttribute('onclick', `openModal('${dateStr}')`);
+                    row.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td class="income-text">${inc > 0 ? '+ ฿' + inc.toLocaleString() : '-'}</td>
+                        <td class="expense-text">${exp > 0 ? '- ฿' + exp.toLocaleString() : '-'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        });
+    }
+
+    window.openModal = function(dateKey) {
+        const data = window.dailyDataCache[dateKey];
+        if(!data) return;
+
+        document.getElementById('modal-title').innerText = `วันที่ ${data.fullDate}`;
+        const detailList = document.getElementById('modal-detail-list');
+        detailList.innerHTML = ''; 
+
+        const incomes = data.details.filter(item => item.type === 'income');
+        const expenses = data.details.filter(item => item.type === 'expense');
+
+        let htmlContent = '';
+
+        if (incomes.length > 0) {
+            const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
+            htmlContent += `
+                <div class="modal-section-title">
+                    <span>รายรับ</span>
+                    <span style="color: var(--text-main);">฿${totalIncome.toLocaleString()}</span>
+                </div>
+            `;
+            incomes.forEach(item => {
+                htmlContent += `
+                    <div class="detail-item">
+                        <div class="detail-info">
+                            <span class="detail-note">${item.note}</span>
+                            <span class="detail-time">
+                                ${item.time}
+                                <span class="action-link" onclick="triggerEdit('${dateKey}', '${item.id}')">แก้ไข</span>
+                                <span class="action-link delete-link" onclick="triggerDelete('${item.id}')">ลบ</span>
+                            </span>
+                        </div>
+                        <span class="income-text">+ ฿${item.amount.toLocaleString()}</span>
+                    </div>
+                `;
+            });
+        }
+
+        if (expenses.length > 0) {
+            const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const marginTop = incomes.length > 0 ? 'margin-top: 20px;' : ''; 
+            htmlContent += `
+                <div class="modal-section-title" style="${marginTop}">
+                    <span>รายจ่าย</span>
+                    <span style="color: var(--text-main);">฿${totalExpense.toLocaleString()}</span>
+                </div>
+            `;
+            expenses.forEach(item => {
+                htmlContent += `
+                    <div class="detail-item">
+                        <div class="detail-info">
+                            <span class="detail-note">${item.note}</span>
+                            <span class="detail-time">
+                                ${item.time}
+                                <span class="action-link" onclick="triggerEdit('${dateKey}', '${item.id}')">แก้ไข</span>
+                                <span class="action-link delete-link" onclick="triggerDelete('${item.id}')">ลบ</span>
+                            </span>
+                        </div>
+                        <span class="expense-text">- ฿${item.amount.toLocaleString()}</span>
+                    </div>
+                `;
+            });
+        }
+
+        detailList.innerHTML = htmlContent;
+        document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    window.triggerEdit = function(dateKey, itemId) {
+        event.stopPropagation(); 
+        const data = window.dailyDataCache[dateKey];
+        const item = data.details.find(i => i.id === itemId);
+        if(!item) return;
+
+        closeModal(); 
+
+        document.getElementById('type').value = item.type;
+        document.getElementById('amount').value = item.amount;
+        document.getElementById('note').value = item.note;
+
+        window.editDocId = item.id;
+
+        const btnSave = document.getElementById('btn-save');
+        btnSave.innerText = "บันทึกการแก้ไข";
+        document.getElementById('btn-cancel-edit').style.display = 'block'; 
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.cancelEdit = function() {
+        window.editDocId = null;
+        document.getElementById('amount').value = '';
+        document.getElementById('note').value = '';
+        
+        const btnSave = document.getElementById('btn-save');
+        btnSave.innerText = "บันทึกข้อมูล";
+        btnSave.disabled = false;
+        
+        document.getElementById('btn-cancel-edit').style.display = 'none'; 
+    }
+
+    window.triggerDelete = async function(itemId) {
+        event.stopPropagation();
+        if(confirm("คุณต้องการลบรายการนี้ใช่หรือไม่? (ลบแล้วกู้คืนไม่ได้นะ)")) {
+            try {
+                await deleteDoc(doc(db, "transactions", itemId));
+                closeModal(); 
+            } catch (error) {
+                console.error("Error deleting: ", error);
+                alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+            }
+        }
+    }
+
+    window.closeModal = function() {
+        document.getElementById('detail-modal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('detail-modal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>
